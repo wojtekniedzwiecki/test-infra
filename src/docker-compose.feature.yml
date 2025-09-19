@@ -1,0 +1,19 @@
+version: '3.9'
+services:
+  my-microservice:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DB_HOST: postgres
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    ports:
+      - "5432:5432"
+  other-microservice:
+    image: org/other-microservice:latest
+    ports:
+      - "4000:4000"

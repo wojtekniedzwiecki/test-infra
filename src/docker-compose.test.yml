@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  app-under-test:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # point to mock DB / fake services
+      DB_HOST: mock-db
+      SERVICE_A_URL: http://mock-service-a:8080
+    depends_on:
+      - mock-db
+      - mock-service-a
+
+  mock-db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: mockuser
+      POSTGRES_PASSWORD: mockpass
+    ports:
+      - "5433:5432"  # different port to avoid clashes
+
+  mock-service-a:
+    image: wiremock/wiremock:2.35.0
+    ports:
+      - "8080:8080"
+    command: ["--verbose"]  # optional

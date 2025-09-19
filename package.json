@@ -1,0 +1,23 @@
+{
+  "name": "@org/test-infra",
+  "version": "1.0.0",
+  "bin": {
+    "test-infra": "./bin/cli.js"
+  },
+  "dependencies": {
+    "fs-extra": "^11.2.0"
+  },
+  "scripts": {
+    "init": "node scripts/init.js"
+  },
+  "devDependencies": {
+    "@pact-foundation/pact": "^12.0.0",
+    "@playwright/test": "^1.44.0",
+    "@types/jest": "^29.5.0",
+    "@types/supertest": "^6.0.3",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.0",
+    "ts-jest": "^29.2.0",
+    "typescript": "^5.3.0"
+  }
+}

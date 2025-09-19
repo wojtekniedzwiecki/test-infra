@@ -1,0 +1,47 @@
+name: Test Pipeline
+
+on:
+  push:
+    branches:
+      - feature/*
+      - development
+  pull_request:
+    branches:
+      - development
+  workflow_dispatch:
+
+jobs:
+  unit_and_mocked:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run test:unit
+      - run: npm run test:contract
+      - run: npm run test:integration:mocked
+
+  feature_env_real_integration:
+    if: startsWith(github.ref, 'refs/heads/feature/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: docker-compose -f node_modules/@org/test-infra/src/docker-compose.feature.yml up -d
+      - run: npm run test:integration:real
+
+  e2e_tests:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run test:e2e
