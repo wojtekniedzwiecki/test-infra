@@ -1,17 +1,22 @@
-import { Publisher } from '@pact-foundation/pact';
+// publishPacts.ts
 import path from 'path';
+import pact from '@pact-foundation/pact-node';
 
-const publisher = new Publisher({
-  pactFilesOrDirs: [path.resolve(process.cwd(), 'pacts')],
-  pactBroker: process.env.PACT_BROKER_URL || 'http://localhost:9292',
-  consumerVersion: process.env.PACT_CONSUMER_VERSION || process.env.npm_package_version || '1.0.0',
-  pactBrokerToken: process.env.PACT_BROKER_TOKEN,
-});
+async function publishPacts() {
+    const opts = {
+        pactFilesOrDirs: [path.resolve(__dirname, '../pacts')],
+        pactBroker: 'https://your-pact-broker-url',
+        consumerVersion: process.env.GIT_COMMIT || '1.0.0',
+        tags: ['dev'],
+    };
 
-publisher.publishPacts()
-    .then(() => {
-        console.log('Pacts published successfully');
-    })
-    .catch((err) => {
-        console.error('Failed to publish pacts:', err);
-    });
+    try {
+        await pact.publishPacts(opts);
+        console.log('Pacts successfully published');
+    } catch (err) {
+        console.error('Pact publish failed: ', err);
+        process.exit(1);
+    }
+}
+
+publishPacts();

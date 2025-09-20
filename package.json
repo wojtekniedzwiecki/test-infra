@@ -5,6 +5,7 @@
     "test-infra": "./bin/cli.js"
   },
   "dependencies": {
+    "@pact-foundation/pact-node": "^10.18.0",
     "fs-extra": "^11.2.0"
   },
   "scripts": {
