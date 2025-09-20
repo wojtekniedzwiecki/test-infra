@@ -1,43 +1,55 @@
-import type { Config } from '@jest/types';
+import { defineConfig } from 'ts-jest';
 
-const unit: Config.InitialOptions = {
-    displayName: 'unit',
-    testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
-    preset: 'ts-jest',
-};
+const reporters = [
+    "default",
+    ["jest-junit", { outputDirectory: "./reports/junit", outputName: "results.xml" }],
+];
 
-const integrationMocked: Config.InitialOptions = {
-    displayName: 'integration-consumer',
-    testMatch: ['<rootDir>/tests/integration/consumer/**/*.test.ts'],
-    preset: 'ts-jest',
-    setupFilesAfterEnv: [
-        '<rootDir>/node_modules/@org/test-infra/src/setup/jest.setup.mocks.ts',
+export default defineConfig({
+    projects: [
+        {
+            displayName: 'unit',
+            testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
+            preset: 'ts-jest',
+            reporters,
+        },
+        {
+            displayName: 'integration-mocked',
+            testMatch: ['<rootDir>/tests/integration/mocked/**/*.test.ts'],
+            preset: 'ts-jest',
+            setupFilesAfterEnv: [
+                '<rootDir>/node_modules/@org/test-infra/src/setup/jest.setup.mocks.ts',
+            ],
+            reporters,
+        },
+        {
+            displayName: 'integration-real',
+            testMatch: ['<rootDir>/tests/integration/real/**/*.test.ts'],
+            preset: 'ts-jest',
+            setupFilesAfterEnv: [
+                '<rootDir>/node_modules/@org/test-infra/src/setup/jest.setup.real.ts',
+            ],
+            globalTeardown:
+                '<rootDir>/node_modules/@org/test-infra/src/setup/global-teardown.ts',
+            reporters,
+        },
+        {
+            displayName: 'contract-consumer',
+            testMatch: ['<rootDir>/tests/contract/consumer/**/*.test.ts'],
+            preset: 'ts-jest',
+            setupFilesAfterEnv: [
+                '<rootDir>/node_modules/@org/test-infra/src/setup/jest.setup.mocks.ts',
+            ],
+            reporters,
+        },
+        {
+            displayName: 'contract-provider',
+            testMatch: ['<rootDir>/tests/contract/provider/**/*.test.ts'],
+            preset: 'ts-jest',
+            setupFilesAfterEnv: [
+                '<rootDir>/node_modules/@org/test-infra/src/setup/jest.setup.mocks.ts',
+            ],
+            reporters,
+        },
     ],
-};
-
-const integrationReal: Config.InitialOptions = {
-    displayName: 'integration-provider',
-    testMatch: ['<rootDir>/tests/integration/provider/**/*.test.ts'],
-    preset: 'ts-jest',
-    setupFilesAfterEnv: [
-        '<rootDir>/node_modules/@org/test-infra/src/setup/jest.setup.provider.ts',
-    ],
-    globalTeardown:
-        '<rootDir>/node_modules/@org/test-infra/src/setup/global-teardown.ts',
-};
-
-const contract: Config.InitialOptions = {
-    displayName: 'contract',
-    testMatch: ['<rootDir>/tests/contract/**/*.test.ts'],
-    preset: 'ts-jest',
-};
-
-const e2e: Config.InitialOptions = {
-    displayName: 'e2e',
-    testMatch: ['<rootDir>/tests/e2e/**/*.test.ts'],
-    preset: 'ts-jest',
-};
-
-module.exports = {
-    projects: [unit, integrationMocked, integrationReal, contract, e2e],
-};
+});

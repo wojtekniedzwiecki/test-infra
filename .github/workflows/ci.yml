@@ -5,13 +5,18 @@ on:
     branches:
       - feature/*
       - development
+      - main
   pull_request:
     branches:
       - development
   workflow_dispatch:
 
+env:
+  BRANCH_NAME: ${{ github.ref_name }}
+
 jobs:
-  unit_and_mocked:
+  local_tests:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,21 +25,69 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm run test:unit
-      - run: npm run test:contract
-      - run: npm run test:integration:mocked
+      - run: npm run test:contract:consumer
+      - run: npm run contract:publish
+      - run: npm run test:contract:provider
 
-  feature_env_real_integration:
+  create_test_env_and_run_contract_and_mocked:
     if: startsWith(github.ref, 'refs/heads/feature/')
     runs-on: ubuntu-latest
+    env:
+      TEST_ENV_NAME: test-${{ env.BRANCH_NAME }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - run: npm ci
-      - run: docker-compose -f node_modules/@org/test-infra/src/docker-compose.feature.yml up -d
-      - run: npm run test:integration:real
+      - run: docker-compose -f src/docker-compose.test.yml -p ${{ env.TEST_ENV_NAME }} up -d
 
+      - name: Run Contract Consumer Tests
+        run: npm run test:contract:consumer
+      - name: Generate Allure Report for Contract Consumer
+        run: npm run allure:generate
+      - name: Upload Allure Results for Contract Consumer
+        uses: allure-actions/upload-results@v1.7
+        with:
+          results: allure-results
+
+      - name: Run Contract Provider Tests
+        run: npm run test:contract:provider
+      - name: Generate Allure Report for Contract Provider
+        run: npm run allure:generate
+      - name: Upload Allure Results for Contract Provider
+        uses: allure-actions/upload-results@v1.7
+        with:
+          results: allure-results
+
+      - name: Run Mocked Integration Tests
+        run: npm run test:integration:mocked
+      - name: Generate Allure Report for Mocked Integration
+        run: npm run allure:generate
+      - name: Upload Allure Results for Mocked Integration
+        uses: allure-actions/upload-results@v1.7
+        with:
+          results: allure-results
+  real_integration:
+    if: startsWith(github.ref, 'refs/heads/feature/')
+    runs-on: ubuntu-latest
+    env:
+      TEST_ENV_NAME: real-${{ env.BRANCH_NAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: docker-compose -f src/docker-compose.feature.yml -p ${{ env.TEST_ENV_NAME }} up -d
+      - name: Run Real Integration Tests
+        run: npm run test:integration:real
+      - name: Generate Allure Report for Real Integration
+        run: npm run allure:generate
+      - name: Upload Allure Results for Real Integration
+        uses: allure-actions/upload-results@v1.7
+        with:
+          results: allure-results
   e2e_tests:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -45,3 +98,23 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm run test:e2e
+      - name: Generate Allure Report for E2E
+        run: npm run allure:generate
+      - name: Upload Allure Results for E2E
+        uses: allure-actions/upload-results@v1.7
+        with:
+          results: allure-results
+
+
+  cleanup_test_env:
+    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'feature/')
+    runs-on: ubuntu-latest
+    env:
+      TEST_ENV_NAME: test-${{ github.head_ref }}
+      REAL_ENV_NAME: real-${{ github.head_ref }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker-compose -f src/docker-compose.test.yml -p ${{ env.TEST_ENV_NAME }} down
+      - run: docker-compose -f src/docker-compose.feature.yml -p ${{ env.REAL_ENV_NAME }} down
+
+

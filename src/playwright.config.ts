@@ -6,4 +6,10 @@ export default defineConfig({
         headless: true,
         baseURL: process.env.BASE_URL || 'http://localhost:3000',
     },
+
+    reporter: [
+        ['list'],
+        ['junit', { outputFile: 'reports/junit/results.xml' }],
+        ['allure-playwright'],
+    ],
 });
